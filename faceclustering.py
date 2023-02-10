@@ -24,7 +24,9 @@ def load_known_faces(path=faces_folder_path):
     known_dict = {}
     folders = os.listdir(path)
     for folder in folders:
-        files = os.listdir(path + folder)
+        if '.' in folder:
+            continue
+        files = os.listdir(os.path.join(path, folder))
         face_desc = []
         for file in files:
             if os.path.splitext(file)[1] in ['.jpg', '.jpeg']:
