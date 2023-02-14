@@ -42,10 +42,11 @@ def load_known_faces(path=faces_folder_path):
 
 def find_known_face(face_dict, face, confidence=0.9):
     match_dict = {}
+    shape = sp(face, dlib.rectangle(0, 0, face.shape[0], face.shape[1]))
+    face_descriptor = facerec.compute_face_descriptor(face, shape)
     for key, values in face_dict.items():
-        confidence = 1.0
         for i, val in enumerate(values):
-            diff = np.linalg.norm(np.array(face) - np.array(val))
+            diff = np.linalg.norm(np.array(face_descriptor) - np.array(val))
             if diff < 1 - confidence and diff < confidence:
                 confidence = diff
         match_dict[key] = confidence
@@ -54,6 +55,6 @@ def find_known_face(face_dict, face, confidence=0.9):
 
 if __name__ == '__main__':
     known_faces = load_known_faces()
-    test_img = cv2.imread('./test.jpg')
+    test_img = cv2.imread('./data/test.jpg')
     result = find_known_face(known_faces, test_img, 0.9)
     print(result)
