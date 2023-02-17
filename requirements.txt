@@ -1,0 +1,4 @@
+paho
+deepface
+numpy
+tqdm
