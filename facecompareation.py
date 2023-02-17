@@ -14,11 +14,12 @@ PATH = './data/'
 TEST_PATH = './data/test.jpg'
 SERVER_ADDRESS = "192.168.85.224"
 SERVER_PORT = 1883
+THRESHOLD = 0.5
+LABEL_LIST = '1 2 3 4'.split()
 
 
-def load_known_faces(path=PATH):
+def load_known_faces(path=PATH, label_list=LABEL_LIST):
     print('Loading known faces...')
-    label_list = ['obama', 'beongce', 'biden', 'marin']
     known_dict = defaultdict(list)
     for label in label_list:
         print(f'Loading {label}...')
@@ -32,7 +33,11 @@ def load_known_faces(path=PATH):
 
 def find_known_face(face_dict, test_face, confidence=0.9):
     match_score = defaultdict(int)
-    face_descriptor = df.represent(img_path=test_face)[0]['embedding']
+    try:
+        face_descriptor = df.represent(img_path=test_face)[0]['embedding']
+    except ValueError as e:
+        print(e)
+        return []
     for key, values in face_dict.items():
         for i in values:
             dist = np.linalg.norm(np.array(i) - np.array(face_descriptor))
@@ -76,16 +81,26 @@ print('Start detecting...')
 while True:
     result_score = find_known_face(face_dict, TEST_PATH)
     # print(result_score)
-    message_uid = random.randint(100000, 999999)
-    workload_dict = {
-        'uid': message_uid,
-        'result': result_score,
-        'timestamp': time.time()
-    }
+    # message_uid = random.randint(100000, 999999)
+    if len(result_score) == 0:
+        workload_dict = {'person_id': '', 'detected': False}
+    else:
+        workload_dict = {
+            # 'uid': message_uid,
+            'person_id':
+            result_score[0][0] if result_score[0][1] < THRESHOLD else '',
+            'detected': True
+        }
     message = json.dumps(workload_dict)
-    client.publish('face/result', message)
-    client.publish('face/result', message)
+    client.publish('magic-mirror/face-recognition', message)
+    # time.sleep(0.1)
+    # client.publish('face/result', message)
     print(message)
-    time.sleep(5)
+    time.sleep(1)
     break
+# %%
+
+TEST_PATH = './data/test.jpg'
+result_score = find_known_face(face_dict, TEST_PATH)
+print(result_score[0][0])
 # %%
