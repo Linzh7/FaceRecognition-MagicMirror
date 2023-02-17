@@ -6,15 +6,21 @@ import os
 from collections import defaultdict
 import numpy as np
 import paho.mqtt.client as mqtt
-import random
 import json
 import time
 import sys
 
 PATH = './data/'
 TEST_PATH = './data/test.jpg'
-SERVER_ADDRESS = sys.argv[1] if len(sys.argv) > 1 else "eclipse.org"
-SERVER_PORT = int(sys.argv[2]) if len(sys.argv) > 2 else 1883
+
+TEST_MODE = False
+
+if TEST_MODE:
+    SERVER_ADDRESS = "test.mosquitto.org"
+    SERVER_PORT = 1883
+else:
+    SERVER_ADDRESS = sys.argv[1] if len(sys.argv) > 1 else "test.mosquitto.org"
+    SERVER_PORT = int(sys.argv[2]) if len(sys.argv) > 2 else 1883
 
 THRESHOLD = 0.5
 LABEL_LIST = '1 2 3 4'.split()
@@ -68,12 +74,15 @@ def on_publish(client, userdata, result):
 
 #%%
 # load data
-# face_dict = load_known_faces()
+if TEST_MODE:
+    face_dict = load_known_faces()
 
 # %%
 
 if __name__ == '__main__':
-    face_dict = load_known_faces()
+    if not TEST_MODE:
+        face_dict = load_known_faces()
+
     client = mqtt.Client()
     client.on_connect = on_connect
     client.on_message = on_message
@@ -103,7 +112,7 @@ if __name__ == '__main__':
         # client.publish('face/result', message)
         print(message)
         time.sleep(1)
-        break
+        # break
 # %%
 
 # TEST_PATH = './data/test.jpg'
