@@ -9,11 +9,13 @@ import paho.mqtt.client as mqtt
 import random
 import json
 import time
+import sys
 
 PATH = './data/'
 TEST_PATH = './data/test.jpg'
-SERVER_ADDRESS = "192.168.85.224"
-SERVER_PORT = 1883
+SERVER_ADDRESS = sys.argv[1] if len(sys.argv) > 1 else "eclipse.org"
+SERVER_PORT = int(sys.argv[2]) if len(sys.argv) > 2 else 1883
+
 THRESHOLD = 0.5
 LABEL_LIST = '1 2 3 4'.split()
 
@@ -66,41 +68,45 @@ def on_publish(client, userdata, result):
 
 #%%
 # load data
-face_dict = load_known_faces()
+# face_dict = load_known_faces()
 
 # %%
 
-client = mqtt.Client()
-client.on_connect = on_connect
-client.on_message = on_message
-client.on_publish = on_publish
+if __name__ == '__main__':
+    face_dict = load_known_faces()
+    client = mqtt.Client()
+    client.on_connect = on_connect
+    client.on_message = on_message
+    client.on_publish = on_publish
 
-client.connect(SERVER_ADDRESS, SERVER_PORT, 60)
+    client.connect(SERVER_ADDRESS, SERVER_PORT, 60)
 
-print('Start detecting...')
-while True:
-    result_score = find_known_face(face_dict, TEST_PATH)
-    # print(result_score)
-    # message_uid = random.randint(100000, 999999)
-    if len(result_score) == 0:
-        workload_dict = {'person_id': '', 'detected': False}
-    else:
-        workload_dict = {
-            # 'uid': message_uid,
-            'person_id':
-            result_score[0][0] if result_score[0][1] < THRESHOLD else '',
-            'detected': True
-        }
-    message = json.dumps(workload_dict)
-    client.publish('magic-mirror/face-recognition', message)
-    # time.sleep(0.1)
-    # client.publish('face/result', message)
-    print(message)
-    time.sleep(1)
-    break
+    print('Start detecting...')
+
+    while True:
+        result_score = find_known_face(face_dict, TEST_PATH)
+        # print(result_score)
+        # message_uid = random.randint(100000, 999999)
+        if len(result_score) == 0:
+            workload_dict = {'person_id': '', 'detected': False}
+        else:
+            workload_dict = {
+                # 'uid': message_uid,
+                'person_id':
+                result_score[0][0] if result_score[0][1] < THRESHOLD else '',
+                'detected':
+                True
+            }
+        message = json.dumps(workload_dict)
+        client.publish('magic-mirror/face-recognition', message)
+        # time.sleep(0.1)
+        # client.publish('face/result', message)
+        print(message)
+        time.sleep(1)
+        break
 # %%
 
-TEST_PATH = './data/test.jpg'
-result_score = find_known_face(face_dict, TEST_PATH)
-print(result_score[0][0])
+# TEST_PATH = './data/test.jpg'
+# result_score = find_known_face(face_dict, TEST_PATH)
+# print(result_score[0][0])
 # %%
