@@ -15,7 +15,7 @@ This module can only **run on x86**.
 └── requirements.txt - libraries this service need
 ```
 
-## How to get start
+## How to get started
 
 ### Requirements
 
