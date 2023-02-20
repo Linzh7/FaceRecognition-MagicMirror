@@ -2,6 +2,8 @@
 
 This service is aimed to recognize the person using Magic Mirror.
 
+This module can only **run on x86**.
+
 ## Stucture of project
 
 ```
