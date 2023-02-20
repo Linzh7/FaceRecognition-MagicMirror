@@ -9,11 +9,12 @@ import paho.mqtt.client as mqtt
 import json
 import time
 import sys
+import random
 
 PATH = './data/'
 TEST_PATH = './data/test.jpg'
 
-TEST_MODE = False
+TEST_MODE = True
 
 if TEST_MODE:
     SERVER_ADDRESS = "test.mosquitto.org"
@@ -92,22 +93,35 @@ if __name__ == '__main__':
 
     print('Start detecting...')
 
+    current_individul = -1
     while True:
         result_score = find_known_face(face_dict, TEST_PATH)
         # print(result_score)
         # message_uid = random.randint(100000, 999999)
         if len(result_score) == 0:
             workload_dict = {'person_id': '', 'detected': False}
+            message = json.dumps(workload_dict)
+            client.publish('magic-mirror/face-recognition', message)
         else:
-            workload_dict = {
-                # 'uid': message_uid,
-                'person_id':
-                result_score[0][0] if result_score[0][1] < THRESHOLD else '',
-                'detected':
-                True
-            }
-        message = json.dumps(workload_dict)
-        client.publish('magic-mirror/face-recognition', message)
+            # if TEST_MODE:
+            #     current_individul = str(random.randint(1, 4))
+            # print(
+            #     f"Current person: {current_individul}, result: {result_score[0][0]}"
+            # )
+            if current_individul != result_score[0][0]:
+                workload_dict = {
+                    # 'uid': message_uid,
+                    'person_id':
+                    current_individul
+                    if result_score[0][1] < THRESHOLD else '',
+                    'detected':
+                    True
+                }
+                message = json.dumps(workload_dict)
+                client.publish('magic-mirror/face-recognition', message)
+                current_individul = result_score[0][0]
+            else:
+                print('Same person, pass')
         # time.sleep(0.1)
         # client.publish('face/result', message)
         print(message)
