@@ -30,3 +30,10 @@ We also provide a `requirements.txt` for pip. Use the following command to insta
 1. Config the `SERVER_ADDRESS` and `SERVER_PORT` in `facecompareation.py`
 1. If you want to use camera, modify the `TEST_PATH`
 1. Run `facecompareation.py`
+
+
+## Contribution
+
+- Transport information module: [qubelka/MMM-transport](https://github.com/qubelka/MMM-transport)
+- Personal agenda module: [noahwo/MMM-personal-agenda](https://github.com/noahwo/MMM-personal-agenda)
+- And also the greatest contribution to this project which was from Kalle. (I copied this sentence from noahwo XD)
