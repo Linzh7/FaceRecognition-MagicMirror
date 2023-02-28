@@ -9,12 +9,12 @@ import paho.mqtt.client as mqtt
 import json
 import time
 import sys
-import random
+from scipy import special as sps
 
 PATH = './data/'
 TEST_PATH = './data/test.jpg'
 
-TEST_MODE = True
+TEST_MODE = False
 
 if TEST_MODE:
     SERVER_ADDRESS = "test.mosquitto.org"
@@ -41,7 +41,8 @@ def load_known_faces(path=PATH, label_list=LABEL_LIST):
 
 
 def find_known_face(face_dict, test_face, confidence=0.9):
-    match_score = defaultdict(int)
+    match_score = defaultdict(list)
+    result_score = defaultdict(int)
     try:
         face_descriptor = df.represent(img_path=test_face)[0]['embedding']
     except ValueError as e:
@@ -52,12 +53,12 @@ def find_known_face(face_dict, test_face, confidence=0.9):
             dist = np.linalg.norm(np.array(i) - np.array(face_descriptor))
             if dist < confidence:
                 # print(f'Match {key} with {dist}')
-                match_score[key] += dist
+                match_score[key] + dist
             else:
                 # print(f'Not match {key} with {dist}')
-                match_score[key] += 1.5  # penalty
-        match_score[key] /= len(values)
-    return sorted(match_score.items(), key=lambda item: item[1])
+                match_score[key] + [1.5]  # penalty
+        result_score[key] = sps.softmax(match_score[key]) / len(values)
+    return sorted(result_score.items(), key=lambda item: item[1])
 
 
 def on_connect(client, userdata, flags, rc):
@@ -93,35 +94,22 @@ if __name__ == '__main__':
 
     print('Start detecting...')
 
-    current_individul = -1
     while True:
         result_score = find_known_face(face_dict, TEST_PATH)
         # print(result_score)
         # message_uid = random.randint(100000, 999999)
         if len(result_score) == 0:
             workload_dict = {'person_id': '', 'detected': False}
-            message = json.dumps(workload_dict)
-            client.publish('magic-mirror/face-recognition', message)
         else:
-            # if TEST_MODE:
-            #     current_individul = str(random.randint(1, 4))
-            # print(
-            #     f"Current person: {current_individul}, result: {result_score[0][0]}"
-            # )
-            if current_individul != result_score[0][0]:
-                workload_dict = {
-                    # 'uid': message_uid,
-                    'person_id':
-                    current_individul
-                    if result_score[0][1] < THRESHOLD else '',
-                    'detected':
-                    True
-                }
-                message = json.dumps(workload_dict)
-                client.publish('magic-mirror/face-recognition', message)
-                current_individul = result_score[0][0]
-            else:
-                print('Same person, pass')
+            workload_dict = {
+                # 'uid': message_uid,
+                'person_id':
+                result_score[0][0] if result_score[0][1] < THRESHOLD else '',
+                'detected':
+                True
+            }
+        message = json.dumps(workload_dict)
+        client.publish('magic-mirror/face-recognition', message)
         # time.sleep(0.1)
         # client.publish('face/result', message)
         print(message)
